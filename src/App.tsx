@@ -40,11 +40,9 @@ function App() {
                 headers: {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'ANY',
-                    'Access-Control-Allow-Headers': 'Content-Type',
+                    'Access-Control-Allow-Methods': 'OPTIONS,POST',
+                    'Access-Control-Allow-Headers': 'Content-Type'
                 },
-                mode: 'cors',
-                credentials: 'omit',
                 body: JSON.stringify(input),
             });
 
