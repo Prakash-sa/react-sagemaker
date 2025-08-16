@@ -35,17 +35,13 @@ function App() {
 
     const sendResponse = async (input: InputJson) => {
         try {
-            const response = await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(input) });
-            const raw = await response.text();           // <-- add
-            console.log('HTTP', response.status, raw);    // <-- add
-            const data: ApiResponse = JSON.parse(raw);    // then parse
+            const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
 
+            const raw = await response.text();
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            console.log(data)
+            const data: ApiResponse = JSON.parse(raw);
+
+            console.log(data);
             if (data.error) {
                 throw new Error(data.error);
             }
