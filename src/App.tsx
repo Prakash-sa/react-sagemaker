@@ -1,94 +1,86 @@
 import { useState } from "react";
 import "./App.css";
-import { ConversationRole } from "@aws-sdk/client-bedrock-runtime";
-import {
-    BedrockAgentRuntimeClient,
-    RetrieveAndGenerateStreamCommand,
-    RetrieveAndGenerateStreamResponse,
-} from "@aws-sdk/client-bedrock-agent-runtime";
 import { ChatInput } from "./components/ChatInput/ChatInput";
 import { ChatMessage } from "./components/ChatMessage/ChatMessage";
 
-const AWS_REGION = "us-east-2";
-const MODEL_ID = "meta.llama3-3-70b-instruct-v1:0";
 const MODEL_NAME = "assistant";
 const USER_NAME = "user";
 
-const client = new BedrockAgentRuntimeClient({
-    region: AWS_REGION,
-    credentials: {
-        accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY,
-        secretAccessKey: import.meta.env.VITE_AWS_SECRET_KEY,
-    },
-});
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/chat';
+
+type Role = typeof MODEL_NAME | typeof USER_NAME;
 
 interface IMessage {
-    role: ConversationRole;
+    role: Role;
     content: { text: string }[];
+}
+
+interface InputJson {
+    inputs: string;
+    parameters?: {
+        temperature?: number;
+        max_new_tokens?: number;
+        top_p?: number;
+    };
+}
+
+interface ApiResponse {
+    response: string;
+    error?: string;
 }
 
 function App() {
     const [history, setHistory] = useState<IMessage[]>([]);
+    const [stream, _setStream] = useState<string | null>(null);
 
-    const [stream, setStream] = useState<string | null>(null);
-
-    const sendResponse = async (prompt: string) => {
-        const content: string = prompt;
-
-        const apiResponse = await client.send(
-            new RetrieveAndGenerateStreamCommand({
-                input: {
-                    text: content,
+    const sendResponse = async (input: InputJson) => {
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'ANY',
+                    'Access-Control-Allow-Headers': 'Content-Type',
                 },
-                retrieveAndGenerateConfiguration: {
-                    type: "KNOWLEDGE_BASE",
-                    knowledgeBaseConfiguration: {
-                        knowledgeBaseId: "W3CNIQGGA9",
-                        modelArn: MODEL_ID,
-                        retrievalConfiguration: {
-                            vectorSearchConfiguration: {
-                                numberOfResults: 11,
-                            },
-                        },
-                    },
-                },
-            })
-        );
+                mode: 'cors',
+                credentials: 'omit',
+                body: JSON.stringify(input),
+            });
 
-        return apiResponse;
-    };
-
-    const parseResponse = async (
-        apiResponse: RetrieveAndGenerateStreamResponse
-    ) => {
-        if (!apiResponse.stream) return "";
-
-        let completeMessage = "";
-
-        // Decode and process the response stream
-        for await (const item of apiResponse.stream) {
-            if (item.output) {
-                const text = item.output.text;
-                setStream(completeMessage + text);
-                completeMessage = completeMessage + text;
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        }
 
-        // Return the final response
-        setStream(null);
-        return completeMessage;
+            const data: ApiResponse = await response.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            return data.response;
+        } catch (error) {
+            console.error('Error:', error);
+            return `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`;
+        }
     };
 
-    const addToHistory = (text: string, role: ConversationRole) => {
+    const addToHistory = (text: string, role: Role) => {
         setHistory((prev) => [...prev, { content: [{ text }], role }]);
     };
 
     const onSubmit = async (prompt: string) => {
         addToHistory(prompt, USER_NAME);
-        const response = await sendResponse(prompt);
+        const inputJson: InputJson = {
+            inputs: prompt,
+            parameters: {
+                temperature: 0.6,
+                max_new_tokens: 64,
+                top_p: 0.9
+            }
+        };
+        const response = await sendResponse(inputJson);
         console.log({ response });
-        const parsedResponse = await parseResponse(response);
-        addToHistory(parsedResponse, MODEL_NAME);
+        addToHistory(response, MODEL_NAME);
     };
 
     return (
