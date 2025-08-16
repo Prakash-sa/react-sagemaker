@@ -35,19 +35,15 @@ function App() {
 
     const sendResponse = async (input: InputJson) => {
         try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(input),
-            });
+            const response = await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(input) });
+            const raw = await response.text();           // <-- add
+            console.log('HTTP', response.status, raw);    // <-- add
+            const data: ApiResponse = JSON.parse(raw);    // then parse
+
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-
-            const data: ApiResponse = await response.json();
             
             console.log(data)
             if (data.error) {
@@ -82,9 +78,9 @@ function App() {
     return (
         <div className="flex flex-col h-screen p-4">
             <div className="overflow-y-scroll flex-1">
-                {history.map(({ role, content }) => (
+                {history.map(({ role, content }, i) => (
                     <ChatMessage
-                        key={content[0].text}
+                        key={i}
                         author={role}
                         reverse={role === USER_NAME}
                         text={content[0].text || ""}

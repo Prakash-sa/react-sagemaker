@@ -1,5 +1,5 @@
 import { ChangeEvent, useState } from "react";
-const PROMPT = "Hi. In a short paragraph, explain what you can do.";
+const PROMPT = "Who are you?";
 
 interface ChatInputProps {
     onSubmit: (prompt: string) => void;
