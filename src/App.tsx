@@ -38,12 +38,8 @@ function App() {
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Methods': 'OPTIONS,POST',
-                    'Access-Control-Allow-Headers': 'Content-Type'
+                    'Content-Type': 'application/json'
                 },
-                mode: 'cors',
                 body: JSON.stringify(input),
             });
 
@@ -52,6 +48,7 @@ function App() {
             }
 
             const data: ApiResponse = await response.json();
+            
             console.log(data)
             if (data.error) {
                 throw new Error(data.error);
