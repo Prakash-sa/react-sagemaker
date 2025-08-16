@@ -43,6 +43,7 @@ function App() {
                     'Access-Control-Allow-Methods': 'OPTIONS,POST',
                     'Access-Control-Allow-Headers': 'Content-Type'
                 },
+                mode: 'cors',
                 body: JSON.stringify(input),
             });
 
@@ -51,6 +52,7 @@ function App() {
             }
 
             const data: ApiResponse = await response.json();
+            console.log(data)
             if (data.error) {
                 throw new Error(data.error);
             }
@@ -77,7 +79,6 @@ function App() {
             }
         };
         const response = await sendResponse(inputJson);
-        console.log({ response });
         addToHistory(response, MODEL_NAME);
     };
 
